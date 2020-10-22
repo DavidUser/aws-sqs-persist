@@ -4,7 +4,7 @@ A convenient way to save messages for future processing.
 
 Features:
 
-* [] Consume batch of messages
+* [x] Consume batch of messages
 * [x] Save messages on database
 * Configure with environment variables:
   * [] Source queue

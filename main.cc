@@ -16,22 +16,25 @@ using Aws::Client::ClientConfiguration;
 
 constexpr auto DB_TABLE_NAME = "test";
 constexpr auto MAX_SQS_LONG_POLLING = 30s;
+constexpr auto BATCH_SIZE = 3;
 
 void ConsumeMessage(ClientConfiguration& config, const Aws::String& queue_url) {
   try {
     Sqs sqs(config, queue_url);
     DynamoDB db(config);
 
-    const auto& message = sqs.ReceiveMessage();
-    std::cout << "Received message: " << message;
+    const Aws::Vector<Message>& messages = sqs.ReceiveMessages(BATCH_SIZE);
+    for (const Message& message : messages) {
+      std::cout << "Received message: " << message;
 
-    db.insert(DB_TABLE_NAME,
-              {{"Name", message.GetMessageId()}, {"Value", message.GetBody()}});
-    std::cout << "Saved on database" << std::endl;
+      db.insert(DB_TABLE_NAME, {{"Name", message.GetMessageId()},
+                                {"Value", message.GetBody()}});
+      std::cout << "Saved on database" << std::endl;
 
-    sqs.DeleteMessage(message);
-    std::cout << "Successfully deleted message " << message.GetMessageId()
-              << " from queue " << queue_url << std::endl;
+      sqs.DeleteMessage(message);
+      std::cout << "Successfully deleted message " << message.GetMessageId()
+                << " from queue " << queue_url << std::endl;
+    }
   } catch (std::exception& error) {
     std::cerr << "Error consuming queue: " << queue_url << "\n"
               << error.what() << std::endl;

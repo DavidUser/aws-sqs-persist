@@ -23,10 +23,10 @@ class Sqs {
   Sqs(Aws::Client::ClientConfiguration& config, const Aws::String& queue_url)
       : queue_url(queue_url), sqs(config) {}
 
-  Message ReceiveMessage() {
+  Aws::Vector<Message> ReceiveMessages(const int count = 1) {
     Aws::SQS::Model::ReceiveMessageRequest rm_req;
     rm_req.SetQueueUrl(queue_url);
-    rm_req.SetMaxNumberOfMessages(1);
+    rm_req.SetMaxNumberOfMessages(count);
 
     auto rm_out = sqs.ReceiveMessage(rm_req);
     if (!rm_out.IsSuccess())
@@ -36,7 +36,11 @@ class Sqs {
     if (messages.size() == 0)
       throw std::runtime_error("No messages received from queue ");
 
-    return messages[0];
+    return messages;
+  }
+
+  Message ReceiveMessage() {
+    return ReceiveMessages()[0];
   }
 
   void DeleteMessage(const Message& message) {
